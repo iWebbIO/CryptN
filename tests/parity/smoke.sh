@@ -53,7 +53,8 @@ sleep 1
 
 # 4. What a scanner sees: stock Apache.
 echo '== GET / (the disguise):'
-curl -s --max-time 5 "http://127.0.0.1:$SRV_PORT/" | head -c 80; echo
+PAGE=$(curl -s --max-time 5 "http://127.0.0.1:$SRV_PORT/")
+echo "${PAGE:0:80}"
 echo '== GET /wp-admin (probe):'
 curl -s --max-time 5 -o /dev/null -w '%{http_code}\n' "http://127.0.0.1:$SRV_PORT/wp-admin/setup-config.php"
 echo '== Server header:'

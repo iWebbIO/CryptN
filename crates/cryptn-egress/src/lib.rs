@@ -70,15 +70,18 @@ impl EgressGuard {
                 Ok(())
             }
             IpAddr::V6(v6) => {
+                // A v4-mapped address is judged by the V4 rules (a mapped
+                // private address is rejected, a mapped public one passes).
                 // Reject: loopback, unspecified, link-local (fe80::/10),
-                // unique-local (fc00::/7), multicast, IPv4-mapped (covered by
-                // the V4 rules after unwrap), documentation, discard-only.
+                // unique-local (fc00::/7), multicast, documentation.
+                if let Some(v4) = v6.to_ipv4_mapped() {
+                    return self.ip_allowed(IpAddr::V4(v4));
+                }
                 if v6.is_loopback()
                     || v6.is_unspecified()
                     || v6.is_multicast()
                     || is_unicast_link_local_v6(v6)
                     || is_unique_local_v6(v6)
-                    || is_v4_mapped(v6)
                     || is_documentation_v6(v6)
                 {
                     return Err(EgressError::NotAllowed);
@@ -112,18 +115,24 @@ impl EgressGuard {
 
         // Every candidate must pass policy; resolve-to-private is rejected
         // even if a public address is also present (no pinning games).
-        let mut first_allowed: Option<SocketAddr> = None;
+        let mut allowed: Vec<SocketAddr> = Vec::with_capacity(candidates.len());
         for addr in &candidates {
             self.ip_allowed(addr.ip())?;
-            if first_allowed.is_none() {
-                first_allowed = Some(*addr);
+            allowed.push(*addr);
+        }
+        if allowed.is_empty() {
+            return Err(EgressError::Resolve);
+        }
+
+        // Try each allowed address in resolver order until one connects:
+        // a dual-stack name with one dead family (e.g. localhost -> [::1,
+        // 127.0.0.1] with nothing listening on v6) must not kill the flow.
+        for addr in allowed {
+            if let Ok(stream) = TcpStream::connect(addr).await {
+                return Ok(stream);
             }
         }
-        let target = first_allowed.ok_or(EgressError::Resolve)?;
-
-        TcpStream::connect(target)
-            .await
-            .map_err(|_| EgressError::Connect)
+        Err(EgressError::Connect)
     }
 }
 
@@ -157,15 +166,6 @@ fn is_unique_local_v6(v: Ipv6Addr) -> bool {
     (s[0] & 0xfe00) == 0xfc00
 }
 
-fn is_v4_mapped(v: Ipv6Addr) -> bool {
-    match v.to_ipv4_mapped() {
-        // A mapped address is judged by the V4 rules (which reject all the
-        // private space), so only *public* mapped addresses pass through.
-        Some(_) => false,
-        None => false,
-    }
-}
-
 fn is_documentation_v6(v: Ipv6Addr) -> bool {
     let s = v.segments();
     s[0] == 0x2001 && (s[1] == 0xdb8) // 2001:db8::/32
@@ -196,6 +196,10 @@ mod tests {
             "fc00::1",
             "ff02::1",
             "2001:db8::1",
+            // v4-mapped private space is judged by the V4 rules.
+            "::ffff:127.0.0.1",
+            "::ffff:10.0.0.1",
+            "::ffff:192.168.1.1",
         ] {
             let ip: IpAddr = s.parse().unwrap();
             assert!(g.ip_allowed(ip).is_err(), "{s} must be rejected");
@@ -210,6 +214,8 @@ mod tests {
             "8.8.8.8",
             "93.184.216.34",
             "2606:4700:4700::1111",
+            // A v4-mapped public address passes.
+            "::ffff:1.1.1.1",
         ] {
             let ip: IpAddr = s.parse().unwrap();
             assert!(g.ip_allowed(ip).is_ok(), "{s} must be allowed");

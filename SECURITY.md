@@ -2,11 +2,15 @@
 
 ## Reporting a vulnerability
 
-Use GitHub's private vulnerability reporting on the **Security** tab of
-this repository ("Report a vulnerability"). Please include reproduction
-steps, the affected component (crate names are fine), and what an attacker
-or prober would observe. Do **not** open public issues for exploitable
-behavior.
+Prefer GitHub's private vulnerability reporting: **Security** tab →
+"Report a vulnerability". (Maintainers: if that button is absent, enable
+it once under *Settings → Code security → Private vulnerability
+reporting*.) Alternatively, email **amir9628.1388@outlook.com** with
+"[CryptN security]" in the subject.
+
+Please include reproduction steps, the affected component (crate names are
+fine), and what an attacker or prober would observe. Do **not** open
+public issues for exploitable behavior.
 
 We aim to respond within 72 hours. Credit is given by default; anonymity
 on request.

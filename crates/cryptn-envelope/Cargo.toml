@@ -1,0 +1,15 @@
+[package]
+name = "cryptn-envelope"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+cryptn-record = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+base64 = { workspace = true }
+rand = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]

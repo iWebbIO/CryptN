@@ -1,0 +1,11 @@
+[package]
+name = "cryptn-persona"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+cryptn-front = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["full"] }

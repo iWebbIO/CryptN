@@ -1,0 +1,28 @@
+[Unit]
+Description=CryptN persona front
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/cryptn-server
+Environment=CRYPTN_BIND=0.0.0.0:80
+Environment=CRYPTN_STATE_DIR=/var/lib/cryptn
+# Capability path secret + credential are printed once on first boot; the
+# state file /var/lib/cryptn/state.json persists them across restarts.
+#
+# SECURITY: never set CRYPTN_ALLOW_PRIVATE here. That switch exists only
+# for local development against loopback test targets.
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/cryptn
+RestrictAddressFamilies=AF_INET AF_INET6
+MemoryDenyWriteExecute=true
+LockPersonality=true
+
+[Install]
+WantedBy=multi-user.target

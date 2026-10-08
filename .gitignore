@@ -1,0 +1,7 @@
+/target
+*.log
+.DS_Store
+.mimosa/
+.zcode/
+state.json
+*.state.json

@@ -1,0 +1,54 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/cryptn-front",
+    "crates/cryptn-persona",
+    "crates/cryptn-pake",
+    "crates/cryptn-session",
+    "crates/cryptn-record",
+    "crates/cryptn-envelope",
+    "crates/cryptn-tunnel",
+    "crates/cryptn-egress",
+    "crates/cryptn-server",
+    "crates/cryptn-client",
+    "crates/cryptn-parity",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+
+[workspace.dependencies]
+tokio = { version = "1", features = ["rt-multi-thread", "net", "io-util", "time", "macros", "sync", "signal"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+base64 = "0.22"
+rand = "0.8"
+rand_core = { version = "0.6", features = ["getrandom"] }
+thiserror = "2"
+chacha20poly1305 = "0.10"
+hkdf = "0.12"
+sha2 = "0.10"
+subtle = "2"
+zeroize = "1"
+opaque-ke = { version = "4.0.1", features = ["std", "curve25519"] }
+voprf = { version = "0.5", default-features = false, features = ["ristretto255-ciphersuite", "danger"] }
+curve25519-dalek = { version = "4", default-features = false, features = ["rand_core", "zeroize"] }
+
+# internal crates
+cryptn-front = { path = "crates/cryptn-front" }
+cryptn-persona = { path = "crates/cryptn-persona" }
+cryptn-pake = { path = "crates/cryptn-pake" }
+cryptn-session = { path = "crates/cryptn-session" }
+cryptn-record = { path = "crates/cryptn-record" }
+cryptn-envelope = { path = "crates/cryptn-envelope" }
+cryptn-tunnel = { path = "crates/cryptn-tunnel" }
+cryptn-egress = { path = "crates/cryptn-egress" }
+
+[profile.release]
+opt-level = "z"
+lto = true
+strip = true
+panic = "abort"
+codegen-units = 1
